@@ -7,6 +7,9 @@ faire bouger des objets de manière visuelle...
 
 ## Théorie
 
+### Kahoot
+- [coordonnées 2d](https://create.kahoot.it/share/coordonnees-2d-c-console/638cd4e0-55cc-41d5-b8a1-144c9cce29e2)
+
 ### Slides
 - [slides condensés](https://etml-inf.github.io/ict-320-poo/slides/02-move2d/)
 

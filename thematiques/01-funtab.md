@@ -13,6 +13,9 @@ Pour la programmation orientée objet, il est impératif de maîtriser les conce
 - [tableaux](../supports/01a-tableau.md)
 - [fonctions](../supports/01b-fonctions.md)
 
+### Kahoots
+- [Kahoot funtab](https://create.kahoot.it/share/preparation-a-la-poo-tableau-et-fonction/9aec9b15-10b6-46fd-8755-f2a58d33ef30)
+
 ## Pratique
 
 ### Menu
