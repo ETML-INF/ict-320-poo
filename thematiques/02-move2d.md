@@ -8,7 +8,7 @@ faire bouger des objets de manière visuelle...
 ## Théorie
 
 ### Slides
-- [slides condensés](https://etml-inf.github.io/ict-320-poo/slides/02-move2d/1)
+- [slides condensés](https://etml-inf.github.io/ict-320-poo/slides/02-move2d/)
 
 ### Manuels
 - [Espace 2D en c#](../supports/02a-coordonnees.md)
