@@ -630,7 +630,7 @@ FillColor(25, 5, 18, 8, ConsoleColor.Blue);        // Bleu
 
 <v-click>
 
-<div class="mt-8 p-4 bg-blue-100 rounded text-center">
+<div class="mt-8 p-4 bg-blue-100 text-blue-900 rounded text-center">
 
 ### Mouvement = Effacer + Modifier + Dessiner
 
