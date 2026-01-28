@@ -122,6 +122,7 @@ export default withMermaid({
     mermaid: {
         // refer https://mermaid.js.org/config/setup/modules/mermaidAPI.html#mermaidapi-configuration-defaults for options
     },
+    ignoreDeadLinks: true
     /*ignoreDeadLinks: [
         /\.docx$/,
     ]*/
