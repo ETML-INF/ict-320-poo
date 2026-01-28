@@ -10,6 +10,9 @@ Pour réaliser cela, la notion générique de ‘paquetage’ est un point fonda
 ### Slides
 - [Slides classes statiques](../slides/03-static-classes.md)
 
+### Kahoot
+- [Quelques questions...](https://create.kahoot.it/share/ict-320-poo-classes-statiques/68430660-1689-4322-b876-d3110bf98842)
+
 
 ## Pratique
 
