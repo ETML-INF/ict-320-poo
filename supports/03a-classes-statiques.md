@@ -131,7 +131,8 @@ void ShowAllScores()
 ### Problèmes Restants
 
 - Les fonctions "flottent" sans contexte
-- Difficile de savoir quelles fonctions vont ensemble
+- Les variables (`scores`, `names`) restent **globales**, séparées des fonctions qui les utilisent
+- Difficile de savoir quelles fonctions et quelles variables vont ensemble
 - Risque de conflit de noms avec d'autres parties du programme
 
 ## Étape 3 : Préfixer les Fonctions
@@ -193,27 +194,37 @@ void Score_ShowAll()
 
 ### Observation Importante
 
-Le préfixe `Score_` indique que ces fonctions forment un **groupe logique**. C'est exactement ce qu'une **classe** va formaliser !
+Le préfixe `Score_` indique que ces fonctions forment un **groupe logique**. Mais les variables `scores` et `names` restent en dehors de ce groupe : rien ne les rattache formellement aux fonctions `Score_*` qui les manipulent.
+
+Une **classe** va résoudre ce problème en regroupant fonctions **ET** variables dans un même conteneur.
 
 ## Étape 4 : Création d'une Classe Statique
 
-Une **classe** est un conteneur qui regroupe des données et des fonctions liées. Une classe **statique** signifie qu'on n'a pas besoin de créer d'objet pour l'utiliser et pour des rasions de simplification, nous utiliserons ce mode pour l'instant.
+Une **classe** est un conteneur qui regroupe des **variables** (appelées **champs**) et des **fonctions** (appelées **méthodes**) liées. C'est l'étape clé : les variables globales `scores` et `names` vont enfin rejoindre les fonctions qui les utilisent, à l'intérieur de la classe.
+
+Une classe **statique** signifie qu'on n'a pas besoin de créer d'objet pour l'utiliser et pour des raisons de simplification, nous utiliserons ce mode pour l'instant.
 
 ### Syntaxe de Base
 
 ```csharp
 static class NomDeLaClasse
 {
-    // Données (champs)
+    // Variables → deviennent des "champs" (fields)
     static int variable = 0;
+    static string name = "valeur";
 
-    // Fonctions (méthodes)
+    // Fonctions → deviennent des "méthodes" (methods)
     static void MaMethode()
     {
-        // ...
+        // Le champ 'variable' est accessible ici directement
+        variable++;
     }
 }
 ```
+
+Les variables et les fonctions, une fois dans une classe, changent de nom :
+- **Variable** → **Champ** (*field*) : une donnée stockée dans la classe
+- **Fonction** → **Méthode** (*method*) : une action de la classe
 
 ### Version du code utilisant une classe statique
 
@@ -276,18 +287,20 @@ static class ScoreManager
 
 ### Ce qui a Changé
 
-| Avant                    | Après                            |
-| ------------------------ | -------------------------------- |
-| `Score_A  ddPoints(...)` | `ScoreManager.AddPoints(...)`    |
-| Fonctions "en vrac"      | Fonctions dans une classe        |
-| `void MaFonction()`      | `public static void MaMethode()` |
-| Variables globales       | Champs `static` de la classe     |
+| Avant                         | Après                            | Terminologie          |
+| ----------------------------- | -------------------------------- | --------------------- |
+| `int[] scores = ...` (global) | `static int[] scores` (classe)   | Variable → **Champ**  |
+| `Score_AddPoints(...)`        | `ScoreManager.AddPoints(...)`    | Fonction → **Méthode**|
+| Fonctions "en vrac"           | Méthodes dans une classe         | Regroupement logique  |
+| `void MaFonction()`           | `public static void MaMethode()`| Ajout `public static` |
 
 ### Le Mot-Clé `static`
 
 - **`static class`** : la classe elle-même est statique (pas besoin d'instanciation)
-- **`static` sur les champs** : les données appartiennent à la classe, pas à une instance
-- **`static` sur les méthodes** : les méthodes s'appellent sur la classe directement
+- **`static` sur les champs (variables)** : les données appartiennent à la classe, pas à une instance. Elles sont partagées et accessibles par toutes les méthodes de la classe
+- **`static` sur les méthodes (fonctions)** : les méthodes s'appellent sur la classe directement
+
+Dans une `static class`, **tous** les membres (champs et méthodes) doivent être `static`.
 
 ### Le Mot-Clé `public`
 
@@ -710,8 +723,8 @@ Screen.ShowMessage("Game Over");
 
 ## Points Importants
 
-1. Une **classe** regroupe des données et des fonctions qui vont ensemble
-2. **`static`** signifie "appartient à la classe, pas à une instance"
+1. Une **classe** regroupe des **variables** (champs) et des **fonctions** (méthodes) qui vont ensemble
+2. **`static`** signifie "appartient à la classe, pas à une instance" — s'applique aux champs ET aux méthodes
 3. **`public`** rend un membre accessible depuis l'extérieur de la classe
 4. Un **namespace** organise les classes et évite les conflits de noms
 5. **`using`** importe un namespace pour éviter d'écrire le nom complet

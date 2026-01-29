@@ -114,12 +114,15 @@ Méthode
 
 `static` signifie : **"appartient à la classe, pas à un objet"**
 
+S'applique aux **méthodes** ET aux **variables** (appelées **champs**) :
+
 ```csharp
 class Program
 {
-    static void Main(string[] args)  // Méthode statique
+    static int count = 0;              // Variable (champ) statique
+    static void Main(string[] args)    // Méthode statique
     {
-        // ...
+        count++;
     }
 }
 ```
@@ -132,8 +135,8 @@ class Program
 
 ### Avec `static`
 - Appel direct : `Program.Main()`
+- Accès direct : `Program.count`
 - Pas besoin de créer d'objet
-- Une seule "copie" en mémoire
 
 </div>
 
@@ -646,7 +649,7 @@ Console.ResetColor();
 
 <div class="mt-4 p-4 bg-orange-100 rounded text-orange-900 text-center text-xl">
 
-3 lignes pour chaque message coloré... On peut faire mieux !
+3 lignes pour chaque message coloré... Et les couleurs sont "en dur" partout !
 
 </div>
 
@@ -753,17 +756,21 @@ void SuperConsole_WriteWarning(string text)
 
 Le préfixe `SuperConsole_` indique un **groupe logique** :
 
-```csharp {0|1|2|3|4|5|all}
+```csharp {0|1|2|3|4|5|6-7|all}
 // Toutes ces fonctions forment une "famille"
 SuperConsole_WriteLineColor(...)
 SuperConsole_WriteSuccess(...)
 SuperConsole_WriteError(...)
 SuperConsole_WriteWarning(...)
+// Et les variables liées aussi !
+ConsoleColor successColor = ConsoleColor.Green;
 ```
 
-<div :class="$clicks >= 6 ? 'opacity-100' : 'opacity-0'" class="mt-8 p-4 bg-blue-900 rounded text-blue-100 text-center text-xl transition-all duration-300">
+<div :class="$clicks >= 8 ? 'opacity-100' : 'opacity-0'" class="mt-8 p-4 bg-blue-900 rounded text-blue-100 text-center text-xl transition-all duration-300">
 
 Le préfixe `SuperConsole_` → va devenir le nom de la **classe** !
+
+Fonctions **ET** variables → regroupées ensemble.
 
 </div>
 
@@ -778,9 +785,14 @@ layout: section
 
 # Transformation en classe statique
 
-```csharp {0|1-2,24|3-9|10-11,13|10-13|15-19|20-24|all}
+```csharp {0|1-2,30|3-6|8-14|16-19|21-24|25-29|all}
 static class SuperConsole
 {
+    // Variables (champs) → stockées dans la classe
+    static ConsoleColor successColor = ConsoleColor.Green;
+    static ConsoleColor errorColor = ConsoleColor.Red;
+    static ConsoleColor warningColor = ConsoleColor.Yellow;
+
     public static void WriteLineColor(string text, ConsoleColor color)
     {
         Console.ForegroundColor = color;
@@ -790,17 +802,17 @@ static class SuperConsole
 
     public static void WriteSuccess(string text)
     {
-        WriteLineColor(text, ConsoleColor.Green);
+        WriteLineColor(text, successColor);
     }
 
     public static void WriteError(string text)
     {
-        WriteLineColor(text, ConsoleColor.Red);
+        WriteLineColor(text, errorColor);
     }
 
     public static void WriteWarning(string text)
     {
-        WriteLineColor(text, ConsoleColor.Yellow);
+        WriteLineColor(text, warningColor);
     }
 }
 ```
@@ -818,9 +830,9 @@ static class SuperConsole
 <div v-click="1" class="bg-gray-300"></div>
 <div v-click="1" class="p-2 bg-purple-100 border-b"><code class="text-purple-700 bg-purple-50 px-1 rounded font-normal">public static void WriteSuccess(...)</code></div>
 
-<div v-click="2" class="p-2 bg-green-100 text-green-800 border-b">Fonction "en vrac"</div>
+<div v-click="2" class="p-2 bg-green-100 text-green-800 border-b">Variables globales</div>
 <div v-click="2" class="bg-gray-300"></div>
-<div v-click="2" class="p-2 bg-green-100 text-green-800 border-b">Dans la classe <code class="text-green-700 bg-green-50 px-1 rounded font-normal">SuperConsole</code></div>
+<div v-click="2" class="p-2 bg-green-100 text-green-800 border-b">Champs <code class="text-green-700 bg-green-50 px-1 rounded font-normal">static</code> de la classe</div>
 
 <div v-click="3" class="p-2 bg-orange-100 text-orange-800">Appel : <code class="text-orange-700 bg-orange-50 px-1 rounded font-normal">SuperConsole_WriteSuccess("OK")</code></div>
 <div v-click="3" class="bg-gray-300"></div>
@@ -835,13 +847,13 @@ Pas d'instanciation
 </div>
 
 <div v-click="2" class="bg-green-500 text-white p-3 rounded">
-<strong>public</strong><br>
-Accessible de l'extérieur
+<strong>Variables → Champs</strong><br>
+Données dans la classe
 </div>
 
 <div v-click="3" class="bg-orange-500 text-white p-3 rounded">
-<strong>static</strong><br>
-Sur la classe
+<strong>public static</strong><br>
+Accessible de l'extérieur
 </div>
 
 </div>
@@ -965,13 +977,13 @@ namespace MyGame.Display
 # Récapitulatif de la progression
 <v-clicks>
 
-| Étape           | Code                                  | Appel                             |
-| --------------- | ------------------------------------- | --------------------------------- |
-| 1. Code en vrac | `Console.ForegroundColor = ...`       | 3 lignes                          |
-| 2. Fonction     | `void WriteSuccess(...)`              | `WriteSuccess("OK")`              |
-| 3. Préfixe      | `void SuperConsole_WriteSuccess(...)` | `SuperConsole_WriteSuccess("OK")` |
-| 4. Classe       | `static class SuperConsole`           | `SuperConsole.WriteSuccess("OK")` |
-| 5. Namespace    | `namespace MyGame.Display`            | + `using MyGame.Display;`         |
+| Étape           | Fonctions                             | Variables                        |
+| --------------- | ------------------------------------- | -------------------------------- |
+| 1. Code en vrac | `Console.ForegroundColor = ...`       | variables globales               |
+| 2. Fonction     | `void WriteSuccess(...)`              | variables globales               |
+| 3. Préfixe      | `void SuperConsole_WriteSuccess(...)` | variables globales               |
+| 4. Classe       | `static class SuperConsole`           | champs `static` dans la classe   |
+| 5. Namespace    | `namespace MyGame.Display`            | + `using MyGame.Display;`        |
 </v-clicks>
 
 <v-click>
@@ -999,7 +1011,7 @@ namespace MyGame.Display
 <v-clicks every=1>
 
 - **namespace** = organise les classes
-- **class** = conteneur de code
+- **class** = conteneur de méthodes ET de variables
 - **static** = pas d'instanciation
 - **public** = visible de l'extérieur
 
