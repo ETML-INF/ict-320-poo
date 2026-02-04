@@ -6,9 +6,8 @@ Le mode 'statique' a été utilisé pour faciliter la transition vers une maniè
 ## Théorie
 
 - [Support instances](../supports/04a-instances.md)
-
-### Slides
 - [Slides instances](https://etml-inf.github.io/ict-320-poo/slides/04-instances/)
+- [Kahoot](https://create.kahoot.it/share/ict-320-poo-instances/885de614-880b-46ee-acf2-a0ba50280515)
 
 ## Pratique
 
@@ -27,8 +26,8 @@ Le mode 'statique' a été utilisé pour faciliter la transition vers une maniè
 - Chaque escargot a sa propre position et son propre nom
 
 ### Tutoriels
-- [Menu OO : des fonctions aux instances](https://labs.section-inf.ch/codelabs/oo-01-menu/index.html?index=..%2F..index)
-- [Course d'escargots OO : des classes statiques aux instances](https://labs.section-inf.ch/codelabs/oo-02-snail/index.html?index=..%2F..index)
+1. [Menu OO : des fonctions aux instances](https://labs.section-inf.ch/codelabs/oo-01-menu/index.html?index=..%2F..index)
+2. [Course d'escargots OO : des classes statiques aux instances](https://labs.section-inf.ch/codelabs/oo-02-snail/index.html?index=..%2F..index)
 
 ## Avancé
 
