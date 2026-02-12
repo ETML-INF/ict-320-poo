@@ -5,9 +5,8 @@ L'encapsulation a pour but de protéger les données d'un objet et contrôler l'
 ## Théorie
 
 - [Support encapsulation](../supports/05a-encapsulation.md)
-
-### Slides
 - [Slides encapsulation](https://etml-inf.github.io/ict-320-poo/slides/05-encapsulation/)
+- [Kahoot encapsulation](https://create.kahoot.it/share/ict-320-poo-c-encapsulation-et-proprietes/9d16b04e-f970-45bf-925a-2c8c41d4ba8f)
 
 ## Pratique
 
