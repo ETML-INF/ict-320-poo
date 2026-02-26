@@ -276,12 +276,12 @@ Console.WriteLine(winner!.Name);  // Le ! dit : "je garantis que ce n'est pas nu
 
 ##### Récapitulatif
 
-| Syntaxe | Signification | Exemple |
-| --- | --- | --- |
-| `Snail s` | Variable non-nullable (ne devrait pas être `null`) | `Snail s = new Snail(...)` |
-| `Snail? s` | Variable nullable (peut être `null`) | `Snail? winner = null` |
-| `s!.Name` | "Je garantis que `s` n'est pas `null`" | `winner!.Name` |
-| `s?.Name` | "Si `s` n'est pas `null`, accède à `Name`" | `winner?.Name` (retourne `null` si `winner` est `null`) |
+| Syntaxe    | Signification                                      | Exemple                                                 |
+|------------|----------------------------------------------------|---------------------------------------------------------|
+| `Snail s`  | Variable non-nullable (ne devrait pas être `null`) | `Snail s = new Snail(...)`                              |
+| `Snail? s` | Variable nullable (peut être `null`)               | `Snail? winner = null`                                  |
+| `s!.Name`  | "Je garantis que `s` n'est pas `null`"             | `winner!.Name`                                          |
+| `s?.Name`  | "Si `s` n'est pas `null`, accède à `Name`"         | `winner?.Name` (retourne `null` si `winner` est `null`) |
 
 Le dernier opérateur, **`?.`** (null-conditional), est un raccourci pratique :
 
@@ -454,7 +454,7 @@ Snail s2 = new Snail();               // OK : utilise le 1er constructeur
 ### Récapitulatif des règles du constructeur
 
 | Situation                                         | Constructeur par défaut | `new Snail()` | `new Snail(0, 5, "Turbo")` |
-| ------------------------------------------------- | ----------------------- | ------------- | -------------------------- |
+|---------------------------------------------------|-------------------------|---------------|----------------------------|
 | Aucun constructeur écrit                          | Généré automatiquement  | OK            | ERREUR                     |
 | Constructeur `Snail(int, int, string)` uniquement | Supprimé                | ERREUR        | OK                         |
 | Les deux constructeurs écrits                     | Écrit manuellement      | OK            | OK                         |
@@ -557,6 +557,342 @@ foreach (Snail snail in snails)
 | Ajouter un champ = un tableau de plus     | Ajouter un champ = modifier la classe uniquement |
 | Fonctions avec index : `Move(i, dx, dy)`  | Méthodes sur l'objet : `snails[i].Move(dx, dy)`  |
 
+## Étape 7 : Deux classes qui collaborent
+
+Jusqu'ici, on a migré *une seule* classe statique vers des instances. Mais dans un vrai programme, plusieurs classes **collaborent** entre elles. Cette étape montre ce qui se passe quand une classe statique en appelle une autre — et pourquoi il faut **instancier les deux**.
+
+### Le point de départ : deux classes statiques
+
+Imaginons que `Snail` utilise une classe utilitaire `Renderer` pour les affichages :
+
+```csharp
+static class Renderer
+{
+    public static void DrawAt(int x, int y, string text)
+    {
+        Console.SetCursorPosition(x, y);
+        Console.Write(text);
+    }
+}
+
+static class Snail
+{
+    static int x = 0;
+    static string name = "Turbo";
+
+    public static void Draw()
+    {
+        Renderer.DrawAt(x, 0, name);  // ← appel statique direct
+    }
+}
+```
+
+L'appel `Renderer.DrawAt(...)` est un **appel statique** : pas d'objet, pas de `new`, pas de référence.
+
+### Première tentative : instancier seulement `Snail`
+
+On retire `static` de `Snail`, mais on laisse `Renderer` statique :
+
+```csharp
+class Snail
+{
+    int x;
+    string name;
+
+    public Snail(int x, string name) { this.x = x; this.name = name; }
+
+    public void Draw()
+    {
+        Renderer.DrawAt(this.x, 0, this.name);  // ← Renderer toujours statique
+    }
+}
+```
+
+Ça compile. Mais on a perdu quelque chose d'essentiel : `Renderer` étant statique, on **ne peut jamais le remplacer**. Un renderer coloré, un renderer graphique, un faux renderer pour les tests — c'est impossible. Le remplacement par une sous-classe (héritage, chapitre 06) n'est possible que si la classe est **instanciée**.
+
+> **Le piège** : laisser une classe utilitaire statique bloque toute possibilité de remplacement ou d'héritage sur cette classe. Même une classe « outil » sans état apparent doit être instanciée pour préserver les bénéfices de la POO.
+
+### Solution : instancier les deux — injection par constructeur
+
+On retire aussi `static` de `Renderer`, et on passe son instance via le **constructeur** de `Snail` :
+
+```csharp
+class Renderer
+{
+    public void DrawAt(int x, int y, string text)
+    {
+        Console.SetCursorPosition(x, y);
+        Console.Write(text);
+    }
+}
+
+class Snail
+{
+    int x;
+    string name;
+    Renderer renderer;  // ← champ qui stocke la référence
+
+    public Snail(int x, string name, Renderer renderer)
+    {
+        this.x = x;
+        this.name = name;
+        this.renderer = renderer;  // ← on mémorise la référence reçue
+    }
+
+    public void Draw()
+    {
+        this.renderer.DrawAt(this.x, 0, this.name);
+    }
+}
+```
+
+Dans le programme principal :
+
+```csharp
+Renderer r = new Renderer();           // 1. créer le Renderer
+Snail s1 = new Snail(0, "Turbo", r);   // 2. passer la référence à chaque escargot
+Snail s2 = new Snail(5, "Speedy", r);
+Snail s3 = new Snail(9, "Flash", r);
+
+s1.Draw();
+s2.Draw();
+```
+
+```
+  Programme principal
+  ┌──────────────┐
+  │ r  ──────────────────────────► ┌─────────────┐
+  ├──────────────┤                 │ Renderer    │
+  │ s1.renderer ─────────────────► └─────────────┘
+  │ s2.renderer ─────────────────►    (partagé)
+  │ s3.renderer ─────────────────►
+  └──────────────┘
+```
+
+Les trois escargots **partagent** la même instance de `Renderer`. Avec l'héritage (chapitre 06), on pourra substituer ce `Renderer` par une sous-classe **sans toucher à `Snail`** :
+
+```csharp
+// Aperçu du chapitre 06 :
+// class ColorRenderer : Renderer { ... }   ← spécialise le comportement
+
+Renderer r = new ColorRenderer(ConsoleColor.Green);
+Snail s1 = new Snail(0, "Turbo", r);
+s1.Draw();  // Turbo s'affiche en vert — Snail n'a pas changé !
+```
+
+### Terminologie : association et composition
+
+Quand une classe stocke une référence vers une autre classe comme champ, la relation porte un nom. On distingue deux cas selon **qui crée l'objet** :
+
+#### Association
+
+`Snail` reçoit un `Renderer` **existant** via son constructeur. Le `Renderer` est créé à l'extérieur et peut être partagé. Les deux objets ont un **cycle de vie indépendant**.
+
+```csharp
+Renderer r = new Renderer();           // créé à l'extérieur
+Snail s1 = new Snail(0, "Turbo", r);   // s1 utilise r
+Snail s2 = new Snail(5, "Speedy", r);  // s2 utilise aussi r
+// r existe avant s1/s2 et peut leur survivre
+```
+
+> **Association** : A *utilise* B. B existe indépendamment de A.
+
+#### Composition
+
+`Snail` crée lui-même son `Renderer` à l'intérieur du constructeur. Le `Renderer` est **possédé** par `Snail` : il est créé avec lui et disparaît avec lui.
+
+```csharp
+class Snail
+{
+    Renderer renderer;
+
+    public Snail(int x, string name)
+    {
+        this.x = x;
+        this.name = name;
+        this.renderer = new Renderer();  // ← Snail crée et possède son Renderer
+    }
+}
+
+Snail s1 = new Snail(0, "Turbo");   // crée son propre Renderer
+Snail s2 = new Snail(5, "Speedy");  // crée le sien aussi — pas de partage
+```
+
+> **Composition** : A *possède* B. B est créé par A et n'a pas de sens sans lui.
+
+#### Récapitulatif : association vs composition
+
+| Critère                   | Association                      | Composition                     |
+| ------------------------- | -------------------------------- | ------------------------------- |
+| Qui crée B ?              | L'extérieur (`new` hors de A)    | A lui-même (`new` dans le ctor) |
+| Partage possible ?        | Oui (plusieurs A, un même B)     | Non (chaque A a son propre B)   |
+| Cycle de vie de B         | Indépendant de A                 | Lié à A                         |
+| Comment B arrive dans A ? | Injecté via constructeur/setter  | Créé dans le constructeur       |
+| Notation UML              | Flèche simple (→)                | Losange plein (◆→)              |
+
+### Dépendance cyclique : le setter
+
+Parfois deux classes dépendent mutuellement l'une de l'autre :
+
+- `Race` crée et gère les `Snail[]`
+- `Snail` a besoin de `Race` pour signaler quand il a fini
+
+Avec l'injection par constructeur seule, on tombe dans un cercle vicieux : pour créer `Snail(race)`, il faut déjà `race`... mais pour créer `Race`, il faut déjà des `Snail`.
+
+**Solution : le setter** — on crée d'abord les objets sans la dépendance cyclique, puis on la ferme via un setter :
+
+```csharp
+class Race
+{
+    Snail[] snails;
+
+    public Race()
+    {
+        // 1. Créer les escargots sans référence à Race
+        snails = new Snail[3];
+        snails[0] = new Snail(0, "Turbo");
+        snails[1] = new Snail(5, "Speedy");
+        snails[2] = new Snail(9, "Flash");
+
+        // 2. Leur donner la référence à this — à nous-mêmes !
+        foreach (Snail s in snails)
+        {
+            s.Race = this;  // ← propriété avec setter
+        }
+    }
+
+    public void RegisterFinish()
+    {
+        Console.WriteLine("Un escargot a terminé !");
+    }
+}
+
+class Snail
+{
+    int x;
+    string name;
+    public Race? Race { get; set; }  // nullable : pas encore assigné au départ
+
+    public Snail(int x, string name)
+    {
+        this.x = x;
+        this.name = name;
+    }
+
+    public void Finish()
+    {
+        this.Race?.RegisterFinish();
+    }
+}
+```
+
+#### `this` dans une affectation de propriété
+
+Dans le constructeur de `Race`, la ligne `s.Race = this` utilise `this` d'une façon qu'on n'a pas encore vue : non pas pour **retirer l'ambiguïté entre un champ et un paramètre** (`this.x`), mais pour **assigner l'objet courant à une propriété**.
+
+```csharp
+public Race()
+{
+    // ...
+    s.Race = this;  // "this" = l'objet Race en cours de construction
+}
+```
+
+`this` est une **référence vers l'instance courante** — ici, la `Race` elle-même. On peut l'assigner partout où ce type est attendu. C'est exactement comme si on écrivait :
+
+```csharp
+Race moi = this;  // "moi" pointe vers l'objet courant
+s.Race = moi;     // équivalent à s.Race = this
+```
+
+Cette technique est nécessaire ici car la `Race` ne possède pas de variable qui pointe vers elle-même — `this` est le seul moyen d'obtenir cette référence depuis l'intérieur de la classe.
+
+> **Résumé des usages de `this`** :
+> | Usage | Exemple | Rôle |
+> |---|---|---|
+> | Retirer l'ambiguïté champ / paramètre | `this.x = x;` | "le champ `x` de cet objet" |
+> | Assigner l'objet courant à une propriété | `s.Race = this;` | "moi-même en tant que `Race`" |
+
+```
+Séquence de construction :
+  1. new Race()           ← Race existe, this = cette Race
+  2.   ├─► new Snail(...) → snail.Race = null
+  3.   ├─► new Snail(...) → snail.Race = null
+  4.   └─► s.Race = this  → snail.Race = this  ← boucle fermée !
+```
+
+> **Règle** : utilise l'**injection par constructeur** pour les dépendances normales. Utilise une **propriété avec setter** uniquement quand la dépendance est **cyclique** et ne peut pas être résolue dans le constructeur.
+
+## Quand utiliser `static` ?
+
+Après tout ce qui précède, on pourrait croire que `static` est toujours une mauvaise idée. Ce n'est pas le cas : `static` reste le bon choix dans des situations précises où il n'y a genuinement **pas d'état par instance** et **pas de besoin d'héritage**.
+
+### Cas 1 : méthodes utilitaires pures
+
+Une méthode qui ne dépend d'aucun état d'objet et n'a pas besoin d'être remplacée par héritage peut rester statique. C'est ce que font `Math.Sqrt()`, `Console.WriteLine()`, `int.Parse()` :
+
+```csharp
+static class MathHelper
+{
+    // Pas d'état — aucune raison de créer une instance
+    public static double Distance(int x1, int y1, int x2, int y2)
+    {
+        return Math.Sqrt((x2-x1)*(x2-x1) + (y2-y1)*(y2-y1));
+    }
+}
+
+double d = MathHelper.Distance(0, 0, 3, 4);  // → 5.0
+```
+
+La méthode ne lit ni ne modifie aucun champ : même résultat quel que soit l'objet. Créer une instance n'apporterait rien.
+
+### Cas 2 : champ `static` dans une classe instanciable
+
+Un **champ statique** peut coexister avec une classe instanciable quand une valeur doit être **partagée par toutes les instances**. Exemple classique : un compteur global.
+
+```csharp
+class Snail
+{
+    static int count = 0;  // partagé par TOUTES les instances
+    int id;                // propre à CHAQUE instance
+
+    public Snail(int x, string name)
+    {
+        Snail.count++;    // incrémente le compteur partagé
+        this.id = count;  // chaque escargot reçoit son propre id
+        // ...
+    }
+}
+
+Snail s1 = new Snail(0, "Turbo");   // count = 1, s1.id = 1
+Snail s2 = new Snail(5, "Speedy");  // count = 2, s2.id = 2
+```
+
+`count` est `static` (une valeur pour tous), `id` est d'instance (une valeur par objet). Les deux coexistent dans la même classe.
+
+### Cas 3 : la méthode `Main`
+
+`Main()` est obligatoirement `static` car elle est appelée par le système **avant** qu'une instance ait été créée.
+
+```csharp
+static void Main(string[] args)
+{
+    // Ici, aucun objet n'existe encore — on ne peut appeler que du static
+    Snail s = new Snail(0, "Turbo");  // on crée le premier objet
+}
+```
+
+### Règle de décision
+
+| Question                                                        | Si oui →                                    |
+|-----------------------------------------------------------------|---------------------------------------------|
+| Y a-t-il un état différent par instance ?                       | Classe instanciable                         |
+| Aura-t-on besoin d'héritage ou de remplacement ?                | Classe instanciable                         |
+| La méthode est une fonction pure (entrée → sortie, sans état) ? | Peut rester `static`                        |
+| Une valeur doit être partagée par *toutes* les instances ?      | Champ `static` dans une classe instanciable |
+
+> **Résumé** : `static` n'est pas mauvais — il est **inapproprié** quand on a besoin de plusieurs instances ou d'héritage. Pour les fonctions pures sans état et les valeurs véritablement partagées entre toutes les instances, `static` reste le bon choix.
+
 ## Passer un objet à une fonction
 
 Quand on passe un objet en paramètre à une fonction, c'est la **référence** qui est transmise, pas une copie de l'objet. La fonction travaille donc sur le **même objet** que l'appelant.
@@ -615,11 +951,11 @@ Double(ref score);
 Console.WriteLine(score);  // Affiche 10
 ```
 
-| Mot-clé | Signification | Contrainte |
-| --- | --- | --- |
-| `ref` | Référence vers la variable | La variable doit être initialisée avant l'appel |
-| `out` | Référence vers la variable (sortie) | La fonction **doit** assigner une valeur |
-| `in` | Référence en lecture seule | La fonction ne peut pas modifier la variable |
+| Mot-clé | Signification                       | Contrainte                                      |
+|---------|-------------------------------------|-------------------------------------------------|
+| `ref`   | Référence vers la variable          | La variable doit être initialisée avant l'appel |
+| `out`   | Référence vers la variable (sortie) | La fonction **doit** assigner une valeur        |
+| `in`    | Référence en lecture seule          | La fonction ne peut pas modifier la variable    |
 
 ```csharp
 // out : la fonction DOIT donner une valeur
@@ -728,6 +1064,7 @@ bool c = true;   // Raccourci pour : System.Boolean c = true;
 | 4. Constructeur        | Initialisation garantie | `new Snail(0, 5, "Turbo")`    |
 | 5. Méthodes d'instance | Comportement par objet  | `s1.Move(1, 0)`               |
 | 6. Tableau d'objets    | Collection d'instances  | `snails[i].Draw()`            |
+| 7. Deux classes        | Association / Composition | `new Snail(x, name, renderer)` / `s.Race = this` |
 
 ## Points Importants
 
@@ -743,6 +1080,10 @@ bool c = true;   // Raccourci pour : System.Boolean c = true;
 10. Passer un objet à une fonction transmet la **référence** : la fonction modifie l'original
 11. Les types simples (`int`, `double`, ...) sont des **types valeur** (copiés), les objets sont des **types référence**
 12. En C#, tout est objet — même `int` (`System.Int32`) — mais les types valeur restent sur la pile
+13. Même les classes « utilitaires » doivent être **instanciées** pour préserver les bénéfices OO (héritage, remplacement) : passer les instances via le **constructeur** (**injection**) ou une **propriété avec setter** (dépendances cycliques)
+14. **Association** : A *utilise* B (B existe indépendamment, injecté via constructeur/propriété). **Composition** : A *possède* B (B est créé dans le constructeur de A, cycles de vie liés)
+15. `this` peut être assigné à une propriété (`s.Race = this`) pour transmettre une référence à l'objet courant depuis l'intérieur de la classe
+16. `static` reste approprié pour les **méthodes pures sans état** (pas d'héritage prévu) et les **champs partagés entre toutes les instances** — il est inapproprié uniquement quand on a besoin de plusieurs exemplaires ou d'héritage
 
 ## Prochaine Étape
 

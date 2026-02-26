@@ -28,8 +28,9 @@ mdc: true
 5. **Constructeur** - Initialiser proprement
 6. **Méthodes d'instance** - Comportement par objet
 7. **Tableau d'objets** - Collections d'instances
-8. **`null` et références** - Pièges courants
-9. **Valeur vs référence** - Deux familles de types
+8. **Deux classes** - Association, composition, injection
+9. **`null` et références** - Pièges courants
+10. **Valeur vs référence** - Deux familles de types
 
 ---
 layout: section
@@ -888,6 +889,382 @@ layout: section
 ---
 
 # Partie 6
+## Deux classes qui collaborent
+
+---
+
+# Le piège : laisser une classe utilitaire statique
+
+<div class="grid grid-cols-2 gap-4 text-sm">
+
+<div>
+
+### Deux classes statiques
+
+```csharp
+static class Renderer {
+    public static void DrawAt(
+            int x, int y, string text) {
+        Console.SetCursorPosition(x, y);
+        Console.Write(text);
+    }
+}
+
+static class Snail {
+    static int x = 0;
+    public static void Draw() {
+        Renderer.DrawAt(x, 0, "Turbo");
+        // ↑ appel statique direct
+    }
+}
+```
+
+</div>
+
+<v-click>
+<div>
+
+### On instancie Snail… mais pas Renderer
+
+```csharp
+class Snail {
+    int x; string name;
+    public void Draw() {
+        Renderer.DrawAt(x, 0, name);
+        // ↑ Renderer encore statique !
+    }
+}
+```
+
+<div class="mt-2 p-2 bg-red-700 rounded text-red-100">
+
+Ça compile — mais `Renderer` ne pourra jamais être remplacé ou hérité !
+
+</div>
+
+</div>
+</v-click>
+
+</div>
+
+<v-click>
+
+<div class="mt-3 p-2 bg-blue-900 rounded text-blue-100 text-center">
+
+Les classes **utilitaires** aussi doivent être instanciées pour garder les bénéfices OO
+
+</div>
+
+</v-click>
+
+---
+
+# Solution : injection par constructeur
+
+```csharp {0|1-3|5-16|all}
+class Renderer {
+    public void DrawAt(int x, int y, string text)
+        { Console.SetCursorPosition(x, y); Console.Write(text); }
+}
+
+class Snail {
+    int x; string name;
+    Renderer renderer;        // ← champ référence
+
+    public Snail(int x, string name, Renderer renderer) {
+        this.x        = x;
+        this.name     = name;
+        this.renderer = renderer;  // ← injection
+    }
+
+    public void Draw() { this.renderer.DrawAt(this.x, 0, this.name); }
+}
+```
+
+---
+
+# Utilisation — créer et partager le Renderer
+
+```csharp
+Renderer r = new Renderer();            // créer une fois
+Snail s1 = new Snail(0, "Turbo", r);   // passer la référence
+Snail s2 = new Snail(5, "Speedy", r);  // même r partagé
+
+s1.Draw();
+s2.Draw();
+```
+
+<v-click>
+
+<div class="mt-6 p-3 bg-green-700 rounded text-green-200 text-center text-sm">
+
+Avec l'héritage (chap. 06) : `new ColorRenderer(...)` en remplacement — **sans changer `Snail`**
+
+</div>
+
+</v-click>
+
+---
+
+# Association vs Composition
+
+<div class="grid grid-cols-2 gap-4 mt-4 text-sm">
+
+<div class="bg-blue-100 text-blue-900 rounded p-3">
+
+### Association — A *utilise* B
+
+B créé **à l'extérieur**, injecté dans A, cycle de vie indépendant
+
+```csharp
+Renderer r = new Renderer();
+Snail s1 = new Snail(..., r);
+Snail s2 = new Snail(..., r);
+// s1 et s2 partagent r
+```
+
+</div>
+
+<v-click>
+<div class="bg-purple-100 text-purple-900 rounded p-3">
+
+### Composition — A *possède* B
+
+B créé **à l'intérieur** par A, cycle de vie lié
+
+```csharp
+class Snail {
+    Renderer renderer;
+    public Snail(...) {
+        this.renderer = new Renderer();
+    }
+}
+// chaque Snail a son propre Renderer
+```
+
+</div>
+</v-click>
+
+</div>
+
+<v-click>
+
+<div class="mt-3 p-3 bg-gray-100 text-gray-900 rounded text-sm">
+
+| | Association | Composition |
+|---|---|---|
+| Qui crée B ? | L'extérieur | A lui-même |
+| Partage ? | Oui | Non |
+| UML | → | ◆→ |
+
+</div>
+
+</v-click>
+
+---
+
+# Dépendance cyclique : le setter
+
+`Race` crée des `Snail[]` — `Snail` a besoin de `Race` — cercle vicieux !
+
+<div class="grid grid-cols-2 gap-4 mt-4">
+
+<div>
+
+```csharp
+class Race
+{
+    Snail[] snails;
+
+    public Race()
+    {
+        snails = new Snail[2];
+        snails[0] = new Snail(0, "Turbo");
+        snails[1] = new Snail(5, "Speedy");
+
+        // Fermer la boucle APRÈS
+        foreach (Snail s in snails)
+            s.Race = this; // ← propriété avec setter
+    }
+}
+```
+
+</div>
+
+<v-click>
+<div>
+
+```csharp
+class Snail
+{
+    // propriété nullable : pas encore assignée
+    public Race? Race { get; set; }
+
+    public Snail(int x, string name) { ... }
+
+    public void Finish()
+    {
+        this.Race?.RegisterFinish();
+    }
+}
+```
+
+</div>
+</v-click>
+
+</div>
+
+<v-click>
+
+<div class="mt-2 p-3 bg-blue-900 rounded text-blue-100">
+
+**Constructeur** pour dépendances normales — **Setter** pour dépendances **cycliques**
+
+</div>
+
+</v-click>
+
+---
+
+# `this` dans une affectation de propriété
+
+Dans `s.Race = this`, `this` ne sert pas à retirer l'ambiguïté sur un champ — il **assigne l'objet courant à une propriété** :
+
+```csharp {0|3-4|6|all}
+public Race()
+{
+    // "this" = la Race en cours de construction
+    // On peut l'assigner partout où ce type est attendu
+
+    s.Race = this;  // équivalent à : Race moi = this; s.Race = moi;
+}
+```
+
+<v-click>
+
+<div class="grid grid-cols-2 gap-4 mt-4">
+
+<div class="border-2 border-yellow-400 rounded p-3 bg-yellow-100 text-yellow-900 text-sm">
+
+### Usage déjà connu
+
+```csharp
+this.x = x;
+```
+
+Retirer l'ambiguïté **champ** vs **paramètre**
+
+</div>
+
+<div class="border-2 border-green-400 rounded p-3 bg-green-100 text-green-900 text-sm">
+
+### Nouvel usage
+
+```csharp
+s.Race = this;
+```
+
+Assigner **l'objet courant** à une propriété
+
+</div>
+
+</div>
+
+</v-click>
+
+<v-click>
+
+<div class="mt-4 p-3 bg-blue-900 rounded text-blue-100 text-center text-sm">
+
+`this` = référence vers l'instance courante — utilisable partout où ce type est attendu
+
+</div>
+
+</v-click>
+
+---
+
+# Quand garder `static` ?
+
+`static` n'est pas mauvais — il est **inapproprié** quand on a besoin de plusieurs instances ou d'héritage.
+
+<div class="grid grid-cols-3 gap-3 mt-4 text-sm">
+
+<v-click>
+<div class="bg-green-100 text-green-700 rounded p-3">
+
+### Méthode pure
+
+```csharp
+static double Distance(
+  int x1, int y1,
+  int x2, int y2) { ... }
+```
+
+Pas d'état — même résultat quel que soit l'appelant (`Math.Sqrt`, `int.Parse`...)
+
+</div>
+</v-click>
+
+<v-click>
+<div class="bg-blue-100 text-blue-700 rounded p-3">
+
+### Champ partagé
+
+```csharp
+class Snail {
+  static int count = 0;
+  // partagé par TOUS
+
+  int id;
+  // propre à chaque instance
+}
+```
+
+`static` sur le champ, classe instanciable
+
+</div>
+</v-click>
+
+<v-click>
+<div class="bg-yellow-100 text-yellow-900 rounded p-3">
+
+### `Main()`
+
+```csharp
+static void Main() {
+  // appelé avant tout objet
+  // → obligatoirement static
+}
+```
+
+Aucune instance n'existe encore à ce stade
+
+</div>
+</v-click>
+
+</div>
+
+<v-click>
+
+<div class="mt-3 p-2 bg-gray-100 text-gray-900 rounded text-sm">
+
+| Question | Si oui → |
+|---|---|
+| État différent par instance ? | Classe instanciable |
+| Besoin d'héritage / remplacement ? | Classe instanciable |
+| Fonction pure sans état ? | Peut rester `static` |
+| Valeur partagée entre toutes les instances ? | Champ `static` dans classe instanciable |
+
+</div>
+
+</v-click>
+
+---
+layout: section
+---
+
+# Partie 7
 ## `null`, références et types
 
 ---
@@ -1209,6 +1586,7 @@ En C#, **tout est objet** — mais les types valeur restent sur la pile pour la 
 | Constructeur        | Initialisation garantie | `new Snail(0, 5, "Turbo")`    |
 | Méthodes d'instance | Comportement par objet  | `s1.Move(1, 0)`               |
 | Tableau d'objets    | Collection d'instances  | `foreach (Snail s in snails)` |
+| Deux classes        | Association / Composition / Propriété | `new Snail(x, name, r)` / `s.Race = this` |
 
 </v-clicks>
 
