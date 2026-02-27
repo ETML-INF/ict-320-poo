@@ -1,5 +1,7 @@
 # L'Héritage
 
+> **— PARTIE A —** Étapes 1 à 4 (jusqu'à `protected`) — slides `06a-inheritance-bases` + codelab `oo-04a-heritage-intro`
+
 ## Introduction
 
 Au chapitre précédent, on a appris à **encapsuler** les données d'un objet : les champs sont `private`, l'accès passe par des propriétés avec validation, et la triche est impossible. Chaque escargot est protégé.
@@ -428,6 +430,8 @@ snail.Energy = 9999;   // ERREUR : protected set → inaccessible
 | `{ get; set; }`           | Tout le monde             | Données sans restriction (rare avec encapsulation)    |
 
 > **Bonne pratique** : préférez `private set` par défaut. Passez à `protected set` uniquement quand une classe dérivée a besoin de modifier la propriété. Le principe du **moindre privilège** s'applique : n'ouvrez que ce qui est nécessaire.
+
+> **— PARTIE B —** Étapes 5 à 9 (`virtual`, polymorphisme, interfaces) — slides `06b-inheritance-comportement` + codelab `oo-04-inheritance`
 
 ## Étape 5 : `virtual` et `override`
 
