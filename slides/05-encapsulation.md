@@ -452,6 +452,16 @@ Assignable **uniquement** dans le constructeur, non modifiable après (immutable
 
 </div>
 
+<v-click>
+
+<div class="mt-2 p-3 bg-orange-100 rounded text-orange-900 text-sm">
+
+Sans assignation dans le constructeur ni initialiseur, retourne toujours `null` / `0` / `false`
+
+</div>
+
+</v-click>
+
 </v-click>
 
 </div>
@@ -493,11 +503,13 @@ Modifiable **par la classe**, lecture seule dehors
 
 <v-clicks>
 
-| Syntaxe                 | Lecture | Écriture     | Cas d'usage     |
-| ----------------------- | ------- | ------------ | --------------- |
-| `{ get; set; }`         | Partout | Partout      | Données libres  |
-| `{ get; private set; }` | Partout | Classe seule | Position, score |
-| `{ get; }`              | Partout | Constructeur | Nom, couleur    |
+| Syntaxe                 | Lecture      | Écriture     | Cas d'usage            |
+| ----------------------- | ------------ | ------------ | ---------------------- |
+| `{ get; set; }`          | Partout      | Partout      | Données libres              |
+| `{ get; private set; }`  | Partout      | Classe seule | Position, score             |
+| `{ get; }`               | Partout      | Constructeur | Nom, couleur (immutable)    |
+| `{ private get; set; }`  | Classe seule | Partout      | Rare — entrée aveugle       |
+| `private { get; set; }`  | Classe seule | Classe seule | État interne (≈ champ privé) |
 
 </v-clicks>
 
@@ -592,7 +604,9 @@ Les données sont **protégées**. La modification passe par les méthodes de la
 2. Les **propriétés** remplacent les méthodes Get/Set
 3. **`value`** = la valeur assignée dans le `set`
 4. `{ get; private set; }` = lecture partout, écriture interne
-5. `{ get; }` = immutable après construction
+5. `{ get; }` = immutable après construction — **sans assignation dans le constructeur, retourne toujours `null`/`0`/`false`**
+6. `{ private get; set; }` = getter privé, setter public — valide mais rare
+7. `private { get; set; }` = propriété entièrement privée — permet d'ajouter des **gardes-fous dans le `set`**, même pour l'état interne de la classe
 
 </v-click>
 

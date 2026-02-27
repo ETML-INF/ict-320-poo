@@ -396,6 +396,24 @@ class Snail
 
 Le nom est **immutable** : une fois créé, il ne change plus. C'est le cas le plus strict.
 
+> **Attention — `{ get; }` sans assignation** : une propriété `{ get; }` non assignée dans le constructeur retourne toujours sa **valeur par défaut** — `null` pour les types référence (`string`, classes), `0` pour les entiers, `false` pour les booléens. Elle compile sans erreur mais se comporte comme si la donnée n'a jamais été définie.
+>
+> ```csharp
+> class Snail
+> {
+>     public string Name { get; }  // Jamais assigné dans le constructeur !
+> }
+>
+> Snail s = new Snail();
+> Console.WriteLine(s.Name);  // Affiche : (rien) — Name vaut null
+> ```
+>
+> Pour être utile, `{ get; }` doit être assigné **dans le constructeur** ou via un **initialiseur de propriété** :
+>
+> ```csharp
+> public string Name { get; } = "Inconnu";  // Initialiseur : valeur par défaut explicite
+> ```
+
 ### `{ get; private set; }` — modifiable par la classe, lecture seule dehors
 
 ```csharp
@@ -441,13 +459,69 @@ turbo.Move(1, 0);                 // OK : passe par la méthode de la classe
 turbo.ReduceEnergy(5);            // OK : passe par la méthode de la classe
 ```
 
+### Cas particulier : `{ private get; set; }`
+
+Il est aussi possible de rendre le **getter privé** tout en gardant le setter public. C'est rare en pratique, mais syntaxiquement valide :
+
+```csharp
+class EventQueue
+{
+    public string LastEvent { private get; set; }  // Setter public, getter privé
+
+    public void ProcessLast()
+    {
+        Console.WriteLine(this.LastEvent);  // OK : lecture en interne seulement
+    }
+}
+
+EventQueue q = new EventQueue();
+q.LastEvent = "click";            // OK : setter public
+Console.WriteLine(q.LastEvent);  // ERREUR : getter est private
+```
+
+Ce cas se justifie quand une donnée peut être écrite de l'extérieur mais ne doit être consommée qu'en interne. En pratique il est très rare — si les deux accès ont des niveaux différents, il vaut souvent mieux repenser la conception de la classe.
+
+### Propriété entièrement privée : `private { get; set; }`
+
+On peut aussi déclarer une propriété `private` — inaccessible depuis l'extérieur, utilisable uniquement en interne :
+
+```csharp
+class Snail
+{
+    private int StepCount { get; set; }  // Invisible depuis l'extérieur
+
+    public void Move(int dx)
+    {
+        this.X += dx;
+        this.StepCount++;
+    }
+
+    public bool IsExhausted()
+    {
+        return this.StepCount > 100;
+    }
+}
+```
+
+Ce cas est fonctionnellement **équivalent à un champ privé** (`private int stepCount;`). L'avantage d'utiliser la syntaxe propriété : on peut ajouter des **gardes-fous dans le `set`** pour protéger l'état interne, même quand personne d'autre ne peut y accéder.
+
+```csharp
+private int StepCount
+{
+    get { return _stepCount; }
+    set { _stepCount = value < 0 ? 0 : value; }  // Jamais négatif, même en interne
+}
+```
+
 ### Quel type choisir ?
 
-| Syntaxe                 | Qui peut lire ? | Qui peut écrire ?      | Cas d'usage                                |
-| ----------------------- | --------------- | ---------------------- | ------------------------------------------ |
-| `{ get; set; }`         | Tout le monde   | Tout le monde          | Données sans contrainte                    |
-| `{ get; private set; }` | Tout le monde   | La classe seulement    | Position, énergie (modification contrôlée) |
-| `{ get; }`              | Tout le monde   | Constructeur seulement | Nom, couleur (immutable)                   |
+| Syntaxe                  | Qui peut lire ?  | Qui peut écrire ?      | Cas d'usage                                   |
+| ------------------------ | ---------------- | ---------------------- | --------------------------------------------- |
+| `{ get; set; }`          | Tout le monde    | Tout le monde          | Données sans contrainte                       |
+| `{ get; private set; }`  | Tout le monde    | La classe seulement    | Position, énergie (modification contrôlée)    |
+| `{ get; }`               | Tout le monde    | Constructeur seulement | Nom, couleur (immutable)                      |
+| `{ private get; set; }`  | La classe seule  | Tout le monde          | Rare — donnée reçue mais consommée en interne |
+| `private { get; set; }`  | La classe seule  | La classe seule        | État interne — équivalent à un champ privé    |
 
 ## Étape 6 : L'escargot encapsulé (version complète)
 
@@ -609,6 +683,7 @@ turbo.ReduceEnergy(5);    // Energy passe à 95
 | Auto-propriété            | `public int Energy { get; set; }`     | Lecture/écriture (extensible)   | Données sans contrainte  |
 | Lecture seule (privé set) | `public int X { get; private set; }`  | Lecture libre, écriture interne | Position, score          |
 | Lecture seule (immutable) | `public string Name { get; }`         | Lecture libre, set constructeur | Identité, configuration  |
+| Propriété privée          | `private int X { get; set; }`         | Classe seule                    | État interne             |
 
 ### Points importants
 
@@ -619,9 +694,11 @@ turbo.ReduceEnergy(5);    // Energy passe à 95
 5. Les **propriétés** (`{ get; set; }`) offrent la syntaxe d'un champ avec le contrôle d'une méthode
 6. Une **full property** (avec un champ privé) permet d'ajouter de la **validation**
 7. `{ get; private set; }` autorise la lecture partout, l'écriture seulement dans la classe
-8. `{ get; }` rend la donnée **immutable** après la construction
-9. Le mot-clé **`value`** dans le `set` représente la valeur qu'on essaie d'assigner
-10. L'encapsulation **centralise la validation** : les règles sont à un seul endroit
+8. `{ get; }` rend la donnée **immutable** après la construction — mais sans assignation dans le constructeur ni initialiseur, la propriété retourne toujours sa **valeur par défaut** (`null`, `0`, `false`)
+9. `{ private get; set; }` est valide mais rare : le getter est privé, le setter est public
+10. `private { get; set; }` : propriété entièrement privée — équivalent à un champ privé, mais permet d'ajouter des **gardes-fous dans le `set`** pour protéger l'état interne contre des valeurs absurdes, même depuis le code de la classe elle-même
+11. Le mot-clé **`value`** dans le `set` représente la valeur qu'on essaie d'assigner
+12. L'encapsulation **centralise la validation** : les règles sont à un seul endroit
 
 ## Glossaire : terminologie POO
 
