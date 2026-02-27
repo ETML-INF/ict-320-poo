@@ -6,6 +6,7 @@ L'héritage permet de créer des classes **spécialisées** à partir d'une clas
 
 - [Support héritage](../supports/06a-heritage.md)
 - [Slides héritage](https://etml-inf.github.io/ict-320-poo/slides/06-inheritance/)
+- [kahoot poly](https://create.kahoot.it/share/ict-320-heritage/a459546c-a93f-41f4-95ae-f9d49038b991)
 
 ## Pratique
 
