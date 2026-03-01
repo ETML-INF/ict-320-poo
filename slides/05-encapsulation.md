@@ -423,7 +423,7 @@ turbo.Energy = -500;  // value = -500 → ignoré !
 
 <h2 v-click> { get; } vs { get; private set; } </h2>
 
-<div class="grid grid-cols-2 gap-8 mt-4">
+<div class="grid grid-cols-2 gap-1 mt-0">
 
 <div>
 
@@ -446,7 +446,7 @@ public void Rename(string n)
 
 <v-click>
 
-<div class="mt-2 p-3 bg-blue-100 rounded text-blue-900 text-sm">
+<div class="mt-1 p-1 bg-blue-100 rounded text-blue-900 text-sm">
 
 Assignable **uniquement** dans le constructeur, non modifiable après (immutable)
 
@@ -454,7 +454,7 @@ Assignable **uniquement** dans le constructeur, non modifiable après (immutable
 
 <v-click>
 
-<div class="mt-2 p-3 bg-orange-100 rounded text-orange-900 text-sm">
+<div class="mt-1 p-1 bg-orange-100 rounded text-orange-700 text-sm">
 
 Sans assignation dans le constructeur ni initialiseur, retourne toujours `null` / `0` / `false`
 
@@ -486,7 +486,7 @@ turbo.X;       // OK (lecture)
 turbo.X = 50;  // ERREUR !
 ```
 
-<div class="mt-2 p-3 bg-green-100 rounded text-green-900 text-sm">
+<div class="mt-5 h-22 p-3 bg-green-100 rounded text-green-900 text-sm">
 
 Modifiable **par la classe**, lecture seule dehors
 
@@ -503,13 +503,13 @@ Modifiable **par la classe**, lecture seule dehors
 
 <v-clicks>
 
-| Syntaxe                 | Lecture      | Écriture     | Cas d'usage            |
-| ----------------------- | ------------ | ------------ | ---------------------- |
-| `{ get; set; }`          | Partout      | Partout      | Données libres              |
-| `{ get; private set; }`  | Partout      | Classe seule | Position, score             |
-| `{ get; }`               | Partout      | Constructeur | Nom, couleur (immutable)    |
-| `{ private get; set; }`  | Classe seule | Partout      | Rare — entrée aveugle       |
-| `private { get; set; }`  | Classe seule | Classe seule | État interne (≈ champ privé) |
+| Syntaxe                 | Lecture      | Écriture     | Cas d'usage                  |
+|-------------------------|--------------|--------------|------------------------------|
+| `{ get; set; }`         | Partout      | Partout      | Données libres               |
+| `{ get; private set; }` | Partout      | Classe seule | Position, score              |
+| `{ get; }`              | Partout      | Constructeur | Nom, couleur (immutable)     |
+| `{ private get; set; }` | Classe seule | Partout      | Rare — entrée aveugle        |
+| `private { get; set; }` | Classe seule | Classe seule | État interne (≈ champ privé) |
 
 </v-clicks>
 
@@ -572,7 +572,7 @@ snail.Name = "";     // ERREUR ✓
 
 <v-click>
 
-<div class="mt-4 p-4 bg-green-700 rounded text-green-200 text-center">
+<div class="mt-2 p-2 bg-green-700 rounded text-green-200 text-center">
 
 Les données sont **protégées**. La modification passe par les méthodes de la classe (`Move`, `ReduceEnergy`).
 
@@ -586,13 +586,13 @@ Les données sont **protégées**. La modification passe par les méthodes de la
 
 <v-clicks>
 
-| Niveau                  | Syntaxe                                                     | Accès                           |
-| ----------------------- | ----------------------------------------------------------- | ------------------------------- |
-| Champ public            | `public int Energy;`                                        | Libre (dangereux)               |
+| Niveau                  | Syntaxe                                                    | Accès                           |
+|-------------------------|------------------------------------------------------------|---------------------------------|
+| Champ public            | `public int Energy;`                                       | Libre (dangereux)               |
 | Private + full property | `private int _energy;` + `Energy { get {...}; set {...} }` | Contrôlé (validation)           |
-| Auto-propriété          | `public int Energy { get; set; }`                           | Libre mais extensible           |
-| Private set             | `public int X { get; private set; }`                        | Lecture libre, écriture interne |
-| Lecture seule           | `public string Name { get; }`                               | Immutable                       |
+| Auto-propriété          | `public int Energy { get; set; }`                          | Libre mais extensible           |
+| Private set             | `public int X { get; private set; }`                       | Lecture libre, écriture interne |
+| Lecture seule           | `public string Name { get; }`                              | Immutable                       |
 
 </v-clicks>
 

@@ -410,7 +410,7 @@ class Obstacle : IDrawable             // Obstacle aussi — sans lien d'hérita
 
 <v-click>
 
-<div class="mt-4 p-4 bg-blue-700 rounded text-blue-100">
+<div class="mt-2 p-1 bg-blue-700 rounded text-blue-100">
 
 Convention : les noms d'interfaces commencent par **`I`** (`IDrawable`, `IMovable`, `IBoostable`).
 

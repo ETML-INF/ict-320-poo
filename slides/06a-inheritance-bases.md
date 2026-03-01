@@ -461,10 +461,10 @@ snail.X = 5;  // ERREUR !
 
 <v-clicks>
 
-| Concept             | Syntaxe                          | Rôle                                  |
-| ------------------- | -------------------------------- | ------------------------------------- |
-| Classe dérivée      | `class FastSnail : Snail`        | Hérite de tout (propriétés, méthodes) |
-| Constructeur parent | `: base(name, color, x, y)`      | Initialise la partie `Snail`          |
+| Concept             | Syntaxe                           | Rôle                                     |
+|---------------------|-----------------------------------|------------------------------------------|
+| Classe dérivée      | `class FastSnail : Snail`         | Hérite de tout (propriétés, méthodes)    |
+| Constructeur parent | `: base(name, color, x, y)`       | Initialise la partie `Snail`             |
 | Accès protégé       | `public int X { protected set; }` | Dérivées peuvent modifier, extérieur non |
 
 </v-clicks>
@@ -486,7 +486,7 @@ class FastSnail : Snail
 
 <v-click>
 
-<div class="mt-4 p-4 bg-purple-700 rounded text-purple-100">
+<div class="mt-0 p-1 bg-purple-700 rounded text-purple-100">
 
 **À vous de pratiquer !** Codelab `oo-04a-heritage-intro` : créer votre première classe dérivée, sans encore utiliser `virtual` ni `override`.
 
